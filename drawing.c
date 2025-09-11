@@ -1,48 +1,12 @@
-//
-// Created by Daniel Al-Zgul on 08/09/2025.
-//
+// The functions that facilitate drawing inside of the terminal.
 
-#include "GUI.h"
+#include "drawing.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <signal.h>
-
-#define ESC "\033"
-#define CORNER "+"
-#define HORIZ '-'
-#define VERTICAL "|"
-
-void clrscr();
-int fsleep(float sec);
-
-struct cursor {
-    int line;
-    int col;
-};
-
-struct cursor Cursor;
-
-struct winsize global_win;
-
-void update_winsize() {
-    ioctl(STDIN_FILENO, TIOCGWINSZ, &global_win);
-    fsleep(0.15);
-}
-
-void window_resize(int sig) {
-    update_winsize();
-}
-
-struct gui_window {
-    int x_start;
-    int y_start;
-    int width;
-    int height;
-};
-typedef struct gui_window gui_window;
 
 // Clear the screen, sys-independent.
 void clrscr() {
@@ -58,6 +22,15 @@ int fsleep(float sec) {
     ts.tv_nsec = (long) (sec * 1000000000L) % 1000000000L;
     res = nanosleep(&ts, NULL);
     return res;
+}
+
+void update_winsize() {
+    ioctl(STDIN_FILENO, TIOCGWINSZ, &global_win);
+    fsleep(0.15);
+}
+
+void window_resize(int sig) {
+    update_winsize();
 }
 
 void draw_error(char * func) {
@@ -118,6 +91,11 @@ int prints(char * str) {
     return printf("%s", str);
 }
 
+int printstr(char * str, int chars, int line) {
+    cursor_to(line, chars);
+    return prints(str);
+}
+
 int draw_window(gui_window w) {
     cursor_to(w.y_start, w.x_start);
     prints(CORNER);
@@ -149,13 +127,5 @@ int init_gui() {
     if (sigaction(SIGWINCH, &act, NULL) == -1) {
         perror("sigaction");
     }
-    return 0;
-}
-
-int draw_gui() {
-    gui_window w = {20, 20, 5, 5};
-    draw_window(w);
-    fsleep(1);
-    clrscr();
     return 0;
 }

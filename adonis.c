@@ -4,7 +4,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "GUI.h"
+#include "drawing.h"
+#include "gui.h"
 
 struct Window {
     int width, height;
