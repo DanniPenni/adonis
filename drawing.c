@@ -16,21 +16,17 @@ void clrscr() {
 // Sleep for sec seconds.
 int fsleep(float sec) {
     struct timespec ts;
-    int res;
 
     ts.tv_sec = (long) sec;
     ts.tv_nsec = (long) (sec * 1000000000L) % 1000000000L;
-    res = nanosleep(&ts, NULL);
-    return res;
+    return nanosleep(&ts, NULL);
 }
 
-void update_winsize() {
+void update_winsize(int sig) {
     ioctl(STDIN_FILENO, TIOCGWINSZ, &global_win);
+    t_width = global_win.ws_col;
+    t_height = global_win.ws_row;
     fsleep(0.15);
-}
-
-void window_resize(int sig) {
-    update_winsize();
 }
 
 void draw_error(char * func) {
@@ -119,10 +115,11 @@ int draw_window(gui_window w) {
 int init_gui() {
     clrscr();
     setbuf(stdout, NULL);
-    window_resize(SIGWINCH);
+    setbuf(stdin, NULL);
+    update_winsize(SIGWINCH);
 
     struct sigaction act;
-    act.sa_handler = &window_resize;
+    act.sa_handler = &update_winsize;
     act.sa_flags = 0;
     if (sigaction(SIGWINCH, &act, NULL) == -1) {
         perror("sigaction");

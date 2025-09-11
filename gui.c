@@ -4,15 +4,38 @@
 #include "drawing.h"
 #include "gui.h"
 
-int draw_gui() {
-    // Draw Logo
-    int t_width = global_win.ws_col;
-    int t_height = global_win.ws_row;
+#include <string.h>
 
-    gui_window w = {1, 1, t_width-1, 3};
-    draw_window(w);
-    printstr("ADONIS", t_width / 2 - 3, 2);
-    fsleep(1);
+#include "inputparse.h"
+
+int draw_gui() {
+    static char last_msg[INLEN];
+    static int i = 0;
+
+    gui_window logo = {1, 1, t_width-1, 3};
+    draw_window(logo);
+    char msg[300];
+    snprintf(msg, 299, "ADON%dS", i);
+    printstr(msg, t_width / 2 - 3, 2);
+
+    gui_window input = {1, t_height-2, t_width-1, 3};
+    draw_window(input);
+
+    cursor_to(t_height-1, 3);
+
+    char * command = read_input();
+    int len = strlen(command);
+
+    if (command[len - 1] == '\n') {
+        strcpy(last_msg, command);
+        memset(command, '\0', len);
+        len = 0;
+    }
+
+    printstr(command, 3, 10);
+
+    fsleep(0.1);
     clrscr();
+    i++;
     return 0;
 }

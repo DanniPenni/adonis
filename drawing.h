@@ -32,11 +32,14 @@ typedef struct gui_window gui_window;
 
 struct cursor Cursor;
 struct winsize global_win;
+int t_width;
+int t_height;
 
 int fsleep(float sec);
 void clrscr();
 int init_gui();
 int draw_window(gui_window w);
 int printstr(char * str, int chars, int line);
+void cursor_to(int lines, int chars);
 
 #endif //ADONIS_DRAWING_H
