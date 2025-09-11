@@ -29,7 +29,7 @@ struct winsize global_win;
 
 void update_winsize() {
     ioctl(STDIN_FILENO, TIOCGWINSZ, &global_win);
-    fsleep(0.1);
+    fsleep(0.15);
 }
 
 void window_resize(int sig) {
@@ -40,12 +40,9 @@ struct gui_window {
     int x_start;
     int y_start;
     int width;
-    int length;
+    int height;
 };
 typedef struct gui_window gui_window;
-
-int MAXLINES = 300;
-int MAXCOLS = 100;
 
 // Clear the screen, sys-independent.
 void clrscr() {
@@ -63,31 +60,46 @@ int fsleep(float sec) {
     return res;
 }
 
+void draw_error(char * func) {
+    clrscr();
+    fprintf(stderr, "Drawing out of bounds at: %s. Cursor at: %d %d\n", func, Cursor.line, Cursor.col);
+    exit(EXIT_FAILURE);
+}
+
 void cursor_to(int lines, int chars) {
     Cursor.line = lines;
     Cursor.col = chars;
     printf(ESC "[%d;%dH", lines, chars);
 }
 
-void move_cursor(int dlines, int dchars) {
+int move_cursor(int dlines, int dchars) {
     int newline = Cursor.line + dlines;
-    if (newline < 0) newline = 0; else if (newline > MAXLINES) newline = MAXLINES;
     int newcol = Cursor.col + dchars;
-    if (newcol < 0) newcol = 0; else if (newcol > MAXCOLS) newcol = MAXCOLS;
+    if (newline < 0 || newline > global_win.ws_row || newcol < 0 || newcol > global_win.ws_col) {
+        draw_error("move_cursor");
+    }
 
     cursor_to(newline, newcol);
+    return 0;
 }
 
 void horiz_border(int len) {
+    Cursor.col += len;
+    if (Cursor.col > global_win.ws_col) {
+        draw_error("horiz_border");
+    }
+
     char * border = malloc(len * sizeof(char));
     memset(border, HORIZ, len);
     printf("%s", border);
     free(border);
-
-    Cursor.col += len;
 }
 
 void vert_border(int len) {
+    if (Cursor.line + len > global_win.ws_row) {
+        draw_error("vert_border");
+    }
+
     for(int i = 0; i < len; i++) {
         printf(VERTICAL "\n");
         Cursor.line += 1;
@@ -97,16 +109,22 @@ void vert_border(int len) {
 
 int prints(char * str) {
     Cursor.col += strlen(str);
+
+    if (Cursor.col > global_win.ws_col) {
+        fprintf(stderr, "Drawing out of bounds\n.");
+        exit(EXIT_FAILURE);
+    }
+
     return printf("%s", str);
 }
 
-void draw_window(gui_window w) {
+int draw_window(gui_window w) {
     cursor_to(w.y_start, w.x_start);
     prints(CORNER);
     horiz_border(w.width-2);
 
     cursor_to(w.y_start+1, w.x_start);
-    vert_border(w.length-2);
+    vert_border(w.height-2);
     prints(CORNER);
 
     horiz_border(w.width-2);
@@ -114,13 +132,16 @@ void draw_window(gui_window w) {
     prints(CORNER);
 
     move_cursor(1, -1);
-    vert_border(w.length-2);
+    vert_border(w.height-2);
     prints(CORNER);
+
+    return 0;
 }
 
 int init_gui() {
     clrscr();
     setbuf(stdout, NULL);
+    window_resize(SIGWINCH);
 
     struct sigaction act;
     act.sa_handler = &window_resize;
@@ -134,7 +155,7 @@ int init_gui() {
 int draw_gui() {
     gui_window w = {20, 20, 5, 5};
     draw_window(w);
-    fsleep(100);
+    fsleep(1);
     clrscr();
     return 0;
 }
