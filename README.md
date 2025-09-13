@@ -22,6 +22,8 @@ $ ./adonis
 Current functionality 
 - You can interact with the program using the input-bar.
 - Once you press enter, the command is saved in the program and displayed on the screen.
+- Backspace & '\n' control characters supported.
+- Press CTRL-C to exit the program.
 
 WIP :)
 - Each window runs a process and displays its output. This is the main functionality of the program; Seeing the outputs of multiple (concurrently running) processes simultaenously.
