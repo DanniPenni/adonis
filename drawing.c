@@ -115,7 +115,6 @@ int draw_window(gui_window w) {
 int init_gui() {
     clrscr();
     setbuf(stdout, NULL);
-    setbuf(stdin, NULL);
     update_winsize(SIGWINCH);
 
     struct sigaction act;

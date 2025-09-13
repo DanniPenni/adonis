@@ -40,6 +40,7 @@ void clrscr();
 int init_gui();
 int draw_window(gui_window w);
 int printstr(char * str, int chars, int line);
+int prints(char * str);
 void cursor_to(int lines, int chars);
 
 #endif //ADONIS_DRAWING_H
